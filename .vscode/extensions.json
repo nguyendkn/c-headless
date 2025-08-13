@@ -1,0 +1,38 @@
+{
+  "recommendations": [
+    // Essential for development
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+    "editorconfig.editorconfig",
+    
+    // TypeScript and JavaScript
+    "ms-vscode.vscode-typescript-next",
+    
+    // React and Next.js
+    "bradlc.vscode-tailwindcss",
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.path-intellisense",
+    
+    // Git and version control
+    "eamodio.gitlens",
+    
+    // Productivity
+    "ms-vscode.vscode-json",
+    "redhat.vscode-yaml",
+    "ms-vscode.vscode-css-peek",
+    "zignd.html-css-class-completion",
+    
+    // Code quality and debugging
+    "usernamehw.errorlens",
+    "streetsidesoftware.code-spell-checker",
+    
+    // Utilities
+    "ms-vscode.vscode-npm-script",
+    "christian-kohler.npm-intellisense",
+    "bradlc.vscode-tailwindcss"
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode.vscode-typescript",
+    "hookyqr.beautify"
+  ]
+}
