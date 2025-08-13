@@ -1,0 +1,1340 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// BASE MODELS (from shared.ts)
+// ============================================================================
+
+// Base audit information
+model AuditInfo {
+  id        String  @id @default(cuid())
+  createdBy String? @map("created_by")
+  updatedBy String? @map("updated_by")
+  clientIp  String? @map("client_ip")
+  userAgent String? @map("user_agent")
+
+  // Relations
+  projects          Project[]
+  tables            Table[]
+  entities          Entity[]
+  aiModels          AIModel[]
+  aiProviderConfigs AIProviderConfig[]
+  aiAgents          AIAgent[]
+  aiWorkflows       AIWorkflow[]
+  aiPrompts         AIPrompt[]
+  aiUsage           AIUsage[]
+  costBudgets       CostBudget[]
+  templates         Template[]
+  mcpServers        MCPServer[]
+
+  @@map("audit_info")
+}
+
+// ============================================================================
+// PROJECT MANAGEMENT (from app.ts)
+// ============================================================================
+
+model Project {
+  id           String  @id @default(cuid())
+  name         String  @unique
+  title        String
+  description  String?
+  config       Json    @default("{}")
+  permissions  Json?
+  settings     Json?
+  integrations Json?
+
+  // Audit fields
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  version   Int        @default(1)
+  metadata  Json?
+  auditId   String?    @map("audit_id")
+  audit     AuditInfo? @relation(fields: [auditId], references: [id])
+
+  // Soft delete
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by")
+
+  // Relations
+  tables      Table[]
+  features    Feature[]
+  views       View[]
+  forms       Form[]
+  filters     Filter[]
+  reports     Report[]
+  dataSources DataSource[]
+  webhooks    Webhook[]
+
+  @@map("projects")
+}
+
+// ============================================================================
+// TABLE SCHEMA (from table.ts)
+// ============================================================================
+
+model Table {
+  id          String  @id @default(cuid())
+  name        String
+  label       String
+  description String?
+  config      Json    @default("{}")
+  permissions Json?
+  display     Json?
+
+  // Audit fields
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  version   Int        @default(1)
+  metadata  Json?
+  auditId   String?    @map("audit_id")
+  audit     AuditInfo? @relation(fields: [auditId], references: [id])
+
+  // Soft delete
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by")
+
+  // Publishing
+  status      String    @default("draft") // draft, published, archived
+  publishedAt DateTime? @map("published_at")
+  publishedBy String?   @map("published_by")
+
+  // Relations
+  projectId     String              @map("project_id")
+  project       Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fields        Field[]
+  entities      Entity[]
+  views         View[]
+  forms         Form[]
+  filters       Filter[]
+  reports       Report[]
+  indexes       TableIndex[]
+  relationships TableRelationship[]
+
+  @@unique([projectId, name])
+  @@map("tables")
+}
+
+model TableIndex {
+  id        String   @id @default(cuid())
+  name      String
+  type      String // btree, hash, gin, gist, fulltext
+  fields    String[] // Array of field names
+  unique    Boolean  @default(false)
+  partial   Boolean  @default(false)
+  condition String?
+  comment   String?
+
+  // Relations
+  tableId String @map("table_id")
+  table   Table  @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  @@unique([tableId, name])
+  @@map("table_indexes")
+}
+
+model TableRelationship {
+  id            String   @id @default(cuid())
+  name          String
+  relatedTable  String   @map("related_table")
+  type          String // one_to_one, one_to_many, many_to_one, many_to_many
+  localField    String[] @map("local_field")
+  foreignField  String[] @map("foreign_field")
+  joinTable     String?  @map("join_table")
+  cascadeDelete Boolean  @default(false) @map("cascade_delete")
+  constraints   Json?
+
+  // Relations
+  tableId String @map("table_id")
+  table   Table  @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  @@unique([tableId, name])
+  @@map("table_relationships")
+}
+
+// ============================================================================
+// FIELD DEFINITIONS (from field.ts)
+// ============================================================================
+
+model Field {
+  id           String  @id @default(cuid())
+  name         String
+  label        String
+  type         String // DataType enum values
+  inputType    String? @map("input_type") // FieldInputType enum values
+  description  String?
+  required     Boolean @default(false)
+  unique       Boolean @default(false)
+  indexed      Boolean @default(false)
+  defaultValue Json?   @map("default_value")
+  validation   Json? // Array of FieldValidationRule
+  options      Json? // Array of FieldOption
+  relationship Json? // FieldRelationship
+  constraints  Json? // FieldConstraints
+  display      Json? // FieldDisplay
+  system       Boolean @default(false)
+  encrypted    Boolean @default(false)
+  permissions  Json?
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  // Relations
+  tableId String @map("table_id")
+  table   Table  @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  @@unique([tableId, name])
+  @@map("fields")
+}
+
+// ============================================================================
+// ENTITY DATA (from entity.ts)
+// ============================================================================
+
+model Entity {
+  id            String   @id @default(cuid())
+  name          String?
+  description   String?
+  data          Json     @default("{}")
+  relationships Json? // Array of EntityRelationship
+  tags          String[]
+  permissions   Json?
+  validation    Json? // ValidationResult
+  workflowState String?  @map("workflow_state")
+  priority      Int?
+  status        String   @default("active") // EntityStatus enum
+
+  // Audit fields
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  version   Int        @default(1)
+  metadata  Json?
+  auditId   String?    @map("audit_id")
+  audit     AuditInfo? @relation(fields: [auditId], references: [id])
+
+  // Soft delete
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by")
+
+  // Localization
+  locale     String  @default("en")
+  originalId String? @map("original_id")
+
+  // Relations
+  tableId     String             @map("table_id")
+  table       Table              @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  history     EntityHistory[]
+  comments    EntityComment[]
+  attachments EntityAttachment[]
+  activities  EntityActivity[]
+
+  @@map("entities")
+}
+
+model EntityHistory {
+  id             String   @id @default(cuid())
+  changeType     String   @map("change_type") // create, update, delete, restore
+  changedFields  String[] @map("changed_fields")
+  previousValues Json?    @map("previous_values")
+  newValues      Json?    @map("new_values")
+  reason         String?
+  changedBy      String   @map("changed_by")
+  changedAt      DateTime @map("changed_at")
+
+  // Base fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  // Relations
+  entityId String @map("entity_id")
+  entity   Entity @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  tableId  String @map("table_id")
+
+  @@map("entity_history")
+}
+
+model EntityComment {
+  id          String   @id @default(cuid())
+  content     String
+  author      String
+  parentId    String?  @map("parent_id")
+  mentions    String[]
+  attachments Json? // Array of EntityFile
+
+  // Base fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  // Relations
+  entityId String          @map("entity_id")
+  entity   Entity          @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  tableId  String          @map("table_id")
+  parent   EntityComment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies  EntityComment[] @relation("CommentReplies")
+
+  @@map("entity_comments")
+}
+
+model EntityAttachment {
+  id          String  @id @default(cuid())
+  file        Json // EntityFile object
+  description String?
+  category    String?
+  uploadedBy  String  @map("uploaded_by")
+
+  // Base fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  // Relations
+  entityId String @map("entity_id")
+  entity   Entity @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  tableId  String @map("table_id")
+
+  @@map("entity_attachments")
+}
+
+model EntityActivity {
+  id           String   @id @default(cuid())
+  activityType String   @map("activity_type") // view, edit, comment, share, export, print
+  description  String?
+  userId       String   @map("user_id")
+  timestamp    DateTime
+
+  // Base fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  // Relations
+  entityId String @map("entity_id")
+  entity   Entity @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  tableId  String @map("table_id")
+
+  @@map("entity_activities")
+}
+
+// ============================================================================
+// VIEW SYSTEM (from view.ts)
+// ============================================================================
+
+model View {
+  id           String  @id @default(cuid())
+  name         String
+  title        String
+  description  String?
+  type         String // ViewType enum values
+  config       Json    @default("{}")
+  permissions  Json?
+  filters      Json? // Array of ViewFilter
+  sorting      Json? // Array of ViewSort
+  grouping     Json? // ViewGrouping
+  aggregations Json? // Array of ViewAggregation
+  public       Boolean @default(false)
+  default      Boolean @default(false)
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  // Relations
+  projectId String  @map("project_id")
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tableId   String  @map("table_id")
+  table     Table   @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  @@unique([tableId, name])
+  @@map("views")
+}
+
+// ============================================================================
+// FORM SYSTEM (from form.ts)
+// ============================================================================
+
+model Form {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  method      String // HttpMethod enum values
+  action      String?
+  fields      Json    @default("[]") // Array of FormField
+  validation  Json? // FormValidation
+  layout      Json? // FormLayout
+  submission  Json? // FormSubmission
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  // Relations
+  projectId String  @map("project_id")
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tableId   String? @map("table_id")
+  table     Table?  @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  @@map("forms")
+}
+
+// ============================================================================
+// FILTER SYSTEM (from filter.ts)
+// ============================================================================
+
+model Filter {
+  id            String   @id @default(cuid())
+  name          String
+  title         String
+  description   String?
+  conditions    Json     @default("[]") // Array of FilterCondition
+  logic         Json? // FilterLogic
+  defaultActive Boolean  @default(false) @map("default_active")
+  public        Boolean  @default(false)
+  category      String?
+  tags          String[]
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  // Relations
+  projectId String  @map("project_id")
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tableId   String  @map("table_id")
+  table     Table   @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  @@unique([tableId, name])
+  @@map("filters")
+}
+
+model FilterPreset {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  filter      Json // Filter configuration
+  public      Boolean   @default(false)
+  category    String?
+  usageCount  Int       @default(0) @map("usage_count")
+  lastUsed    DateTime? @map("last_used")
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  // Relations
+  tableId String @map("table_id")
+
+  @@map("filter_presets")
+}
+
+// ============================================================================
+// REPORT SYSTEM (from report.ts)
+// ============================================================================
+
+model Report {
+  id             String   @id @default(cuid())
+  name           String
+  title          String
+  description    String?
+  category       String?
+  tags           String[]
+  dataSources    Json     @default("[]") @map("data_sources") // Array of ReportDataSource
+  sections       Json     @default("[]") // Array of ReportSection
+  parameters     Json? // Array of ReportParameter
+  filters        Json? // Array of FilterCondition
+  permissions    Json?
+  schedule       Json? // ReportSchedule
+  exportSettings Json?    @map("export_settings") // ReportExportSettings
+  public         Boolean  @default(false)
+  layout         Json? // ReportLayout
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  // Relations
+  projectId String  @map("project_id")
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tableId   String? @map("table_id")
+  table     Table?  @relation(fields: [tableId], references: [id], onDelete: Cascade)
+
+  @@map("reports")
+}
+
+// ============================================================================
+// FEATURE SYSTEM (from feature.ts)
+// ============================================================================
+
+model Feature {
+  id             String   @id @default(cuid())
+  name           String
+  title          String
+  description    String?
+  category       String?
+  type           String // FeatureType enum values
+  config         Json     @default("{}")
+  enabled        Boolean  @default(true)
+  dependencies   String[]
+  permissions    Json?
+  settings       Json?
+  featureVersion String?  @map("feature_version")
+  author         String?
+  tags           String[]
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  // Soft delete
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by")
+
+  // Relations
+  projectId String  @map("project_id")
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, name])
+  @@map("features")
+}
+
+// ============================================================================
+// AI SYSTEM (from ai.ts)
+// ============================================================================
+
+model AIModel {
+  id           String   @id @default(cuid())
+  name         String   @unique
+  displayName  String   @map("display_name")
+  description  String?
+  provider     String // AIProvider enum values
+  modelId      String   @map("model_id")
+  modelVersion String?  @map("model_version")
+  capabilities Json     @default("{}")
+  config       Json     @default("{}")
+  pricing      Json?
+  active       Boolean  @default(true)
+  tags         String[]
+
+  // Audit fields
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  version   Int        @default(1)
+  metadata  Json?
+  auditId   String?    @map("audit_id")
+  audit     AuditInfo? @relation(fields: [auditId], references: [id])
+
+  // Relations
+  agents    AIAgent[]
+  workflows AIWorkflow[]
+  prompts   AIPrompt[]
+  usage     AIUsage[]
+
+  @@map("ai_models")
+}
+
+model AIProviderConfig {
+  id              String    @id @default(cuid())
+  provider        String // AIProvider enum values
+  name            String
+  description     String?
+  config          Json      @default("{}")
+  models          String[]
+  status          String    @default("active") // active, inactive, error
+  lastHealthCheck DateTime? @map("last_health_check")
+  priority        Int?
+  rateLimit       Json?     @map("rate_limit")
+
+  // Audit fields
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  version   Int        @default(1)
+  metadata  Json?
+  auditId   String?    @map("audit_id")
+  audit     AuditInfo? @relation(fields: [auditId], references: [id])
+
+  @@unique([provider, name])
+  @@map("ai_provider_configs")
+}
+
+model AIAgent {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  displayName   String   @map("display_name")
+  description   String?
+  type          String // AgentType enum values
+  config        Json     @default("{}")
+  capabilities  Json     @default("{}")
+  permissions   Json?
+  status        String   @default("active") // AgentStatus enum values
+  tags          String[]
+  parentAgentId String?  @map("parent_agent_id")
+  childAgents   String[] @map("child_agents")
+
+  // Audit fields
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  version   Int        @default(1)
+  metadata  Json?
+  auditId   String?    @map("audit_id")
+  audit     AuditInfo? @relation(fields: [auditId], references: [id])
+
+  // Soft delete
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by")
+
+  // Relations
+  modelId     String       @map("model_id")
+  model       AIModel      @relation(fields: [modelId], references: [id])
+  workflows   AIWorkflow[]
+  prompts     AIPrompt[]
+  usage       AIUsage[]
+  parentAgent AIAgent?     @relation("AgentHierarchy", fields: [parentAgentId], references: [id])
+  children    AIAgent[]    @relation("AgentHierarchy")
+
+  @@map("ai_agents")
+}
+
+model AIWorkflow {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  type        String // WorkflowType enum values
+  steps       Json     @default("[]") // Array of WorkflowStep
+  config      Json     @default("{}")
+  triggers    Json? // Array of WorkflowTrigger
+  status      String   @default("draft") // WorkflowStatus enum values
+  permissions Json?
+  tags        String[]
+
+  // Audit fields
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  version   Int        @default(1)
+  metadata  Json?
+  auditId   String?    @map("audit_id")
+  audit     AuditInfo? @relation(fields: [auditId], references: [id])
+
+  // Soft delete
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by")
+
+  // Relations
+  modelId    String?             @map("model_id")
+  model      AIModel?            @relation(fields: [modelId], references: [id])
+  agentId    String?             @map("agent_id")
+  agent      AIAgent?            @relation(fields: [agentId], references: [id])
+  executions WorkflowExecution[]
+
+  @@map("ai_workflows")
+}
+
+model AIPrompt {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String?
+  content     String
+  variables   Json? // Array of PromptVariable
+  config      Json     @default("{}")
+  permissions Json?
+  tags        String[]
+  usageStats  Json?    @map("usage_stats")
+
+  // Audit fields
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  version   Int        @default(1)
+  metadata  Json?
+  auditId   String?    @map("audit_id")
+  audit     AuditInfo? @relation(fields: [auditId], references: [id])
+
+  // Soft delete
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by")
+
+  // Relations
+  modelId  String?         @map("model_id")
+  model    AIModel?        @relation(fields: [modelId], references: [id])
+  agentId  String?         @map("agent_id")
+  agent    AIAgent?        @relation(fields: [agentId], references: [id])
+  versions PromptVersion[]
+
+  @@map("ai_prompts")
+}
+
+model AIUsage {
+  id       String  @id @default(cuid())
+  userId   String? @map("user_id")
+  agentId  String? @map("agent_id")
+  provider String // AIProvider enum values
+  type     String // UsageType enum values
+  tokens   Json? // TokenUsage
+  request  Json? // UsageRequest
+  response Json? // UsageResponse
+  cost     Json? // UsageCost
+
+  // Audit fields
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  version   Int        @default(1)
+  metadata  Json?
+  auditId   String?    @map("audit_id")
+  audit     AuditInfo? @relation(fields: [auditId], references: [id])
+
+  // Relations
+  modelId String   @map("model_id")
+  model   AIModel  @relation(fields: [modelId], references: [id])
+  agent   AIAgent? @relation(fields: [agentId], references: [id])
+
+  @@map("ai_usage")
+}
+
+model CostBudget {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  amount      Float
+  currency    String
+  period      String // daily, weekly, monthly, yearly, custom
+  scope       Json // BudgetScope
+  alerts      Json? // Array of BudgetAlert
+  status      String  @default("active") // active, exceeded, paused
+
+  // Audit fields
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  version   Int        @default(1)
+  metadata  Json?
+  auditId   String?    @map("audit_id")
+  audit     AuditInfo? @relation(fields: [auditId], references: [id])
+
+  @@map("cost_budgets")
+}
+
+// ============================================================================
+// TEMPLATE BUILDER SYSTEM (from builder.ts)
+// ============================================================================
+
+model Template {
+  id              String   @id @default(cuid())
+  name            String
+  title           String
+  description     String?
+  type            String // TemplateType enum values
+  category        String?
+  tags            String[]
+  rootComponent   Json     @map("root_component") // Component tree
+  config          Json     @default("{}")
+  permissions     Json?
+  validation      Json? // ValidationResult
+  published       Boolean  @default(false)
+  templateVersion String?  @map("template_version")
+  previewImage    String?  @map("preview_image")
+
+  // Audit fields
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  version   Int        @default(1)
+  metadata  Json?
+  auditId   String?    @map("audit_id")
+  audit     AuditInfo? @relation(fields: [auditId], references: [id])
+
+  // Soft delete
+  deletedAt DateTime? @map("deleted_at")
+  deletedBy String?   @map("deleted_by")
+
+  @@map("templates")
+}
+
+// ============================================================================
+// MCP (Model Context Protocol) SYSTEM
+// ============================================================================
+
+model MCPServer {
+  id              String    @id @default(cuid())
+  name            String    @unique
+  description     String?
+  endpoint        String
+  transport       String // MCPTransport enum values
+  capabilities    Json      @default("{}")
+  config          Json      @default("{}")
+  status          String    @default("active") // active, inactive, error
+  lastHealthCheck DateTime? @map("last_health_check")
+  serverVersion   String?   @map("server_version")
+
+  // Audit fields
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  version   Int        @default(1)
+  metadata  Json?
+  auditId   String?    @map("audit_id")
+  audit     AuditInfo? @relation(fields: [auditId], references: [id])
+
+  @@map("mcp_servers")
+}
+
+// ============================================================================
+// ADDITIONAL UTILITY MODELS
+// ============================================================================
+
+model SystemConfig {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  value       Json
+  description String?
+  category    String?
+  encrypted   Boolean @default(false)
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  @@map("system_configs")
+}
+
+model UserSession {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  sessionId String   @unique @map("session_id")
+  data      Json     @default("{}")
+  expiresAt DateTime @map("expires_at")
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+// ============================================================================
+// VALIDATION SYSTEM
+// ============================================================================
+
+model ValidationResult {
+  id       String   @id @default(cuid())
+  valid    Boolean
+  errors   String[] // Array of error messages
+  warnings String[] // Array of warning messages
+  context  String? // Context where validation was performed
+  entityId String?  @map("entity_id") // Related entity if applicable
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  @@map("validation_results")
+}
+
+// ============================================================================
+// USER MANAGEMENT AND PERMISSIONS
+// ============================================================================
+
+model User {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  username    String?   @unique
+  firstName   String?   @map("first_name")
+  lastName    String?   @map("last_name")
+  avatar      String?
+  status      String    @default("active") // active, inactive, suspended
+  lastLoginAt DateTime? @map("last_login_at")
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  // Relations
+  roles    UserRole[]
+  apiKeys  APIKey[]
+  sessions UserSession[]
+
+  @@map("users")
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  displayName String   @map("display_name")
+  description String?
+  permissions String[] // Array of permission names
+  system      Boolean  @default(false) // System roles cannot be deleted
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  // Relations
+  users UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+  roleId String @map("role_id")
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model Permission {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  displayName String  @map("display_name")
+  description String?
+  resource    String // Resource this permission applies to
+  action      String // Action allowed (read, write, delete, etc.)
+  system      Boolean @default(false) // System permissions cannot be deleted
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  @@unique([resource, action])
+  @@map("permissions")
+}
+
+model APIKey {
+  id          String    @id @default(cuid())
+  name        String
+  keyHash     String    @unique @map("key_hash") // Hashed API key
+  keyPrefix   String    @map("key_prefix") // First few chars for identification
+  permissions String[] // Array of permission names
+  expiresAt   DateTime? @map("expires_at")
+  lastUsedAt  DateTime? @map("last_used_at")
+  active      Boolean   @default(true)
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  // Relations
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+}
+
+// ============================================================================
+// AUDIT AND LOGGING SYSTEM
+// ============================================================================
+
+model AuditLog {
+  id         String  @id @default(cuid())
+  action     String // Action performed (create, update, delete, etc.)
+  resource   String // Resource affected (table name, etc.)
+  resourceId String? @map("resource_id") // ID of affected resource
+  userId     String? @map("user_id") // User who performed action
+  sessionId  String? @map("session_id") // Session ID
+  ipAddress  String? @map("ip_address") // Client IP
+  userAgent  String? @map("user_agent") // Client user agent
+  changes    Json? // Details of changes made
+  oldValues  Json?   @map("old_values") // Previous values
+  newValues  Json?   @map("new_values") // New values
+  success    Boolean @default(true) // Whether action succeeded
+  errorMsg   String? @map("error_message") // Error message if failed
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  metadata  Json?
+
+  @@index([resource, resourceId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================================================
+// FILE STORAGE SYSTEM
+// ============================================================================
+
+model FileStorage {
+  id         String   @id @default(cuid())
+  filename   String // Original filename
+  storedName String   @unique @map("stored_name") // Stored filename
+  mimeType   String   @map("mime_type") // File MIME type
+  size       Int // File size in bytes
+  path       String // Storage path
+  bucket     String? // Storage bucket (for cloud storage)
+  url        String? // Public URL if available
+  checksum   String? // File checksum for integrity
+  uploadedBy String   @map("uploaded_by") // User who uploaded
+  category   String? // File category
+  tags       String[] // File tags
+  metadata   Json? // Additional file metadata
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+
+  @@index([uploadedBy])
+  @@index([category])
+  @@index([mimeType])
+  @@map("file_storage")
+}
+
+// ============================================================================
+// DATA SOURCE SYSTEM
+// ============================================================================
+
+model DataSource {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  displayName String    @map("display_name")
+  description String?
+  type        String // database, api, file, etc.
+  config      Json      @default("{}")
+  credentials Json? // Encrypted credentials
+  status      String    @default("active") // active, inactive, error
+  lastSync    DateTime? @map("last_sync")
+  syncStatus  String?   @map("sync_status") // success, error, in_progress
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  // Relations
+  projectId String  @map("project_id")
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("data_sources")
+}
+
+// ============================================================================
+// WORKFLOW EXECUTION SYSTEM
+// ============================================================================
+
+model WorkflowExecution {
+  id          String    @id @default(cuid())
+  workflowId  String    @map("workflow_id")
+  status      String    @default("pending") // pending, running, completed, failed, cancelled
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  triggeredBy String?   @map("triggered_by") // User or system that triggered
+  triggerData Json?     @map("trigger_data") // Data that triggered the workflow
+  currentStep String?   @map("current_step") // Current step ID
+  stepResults Json?     @map("step_results") // Results from each step
+  errorMsg    String?   @map("error_message") // Error message if failed
+  retryCount  Int       @default(0) @map("retry_count")
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  // Relations
+  workflow AIWorkflow @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+
+  @@index([workflowId])
+  @@index([status])
+  @@index([startedAt])
+  @@map("workflow_executions")
+}
+
+// ============================================================================
+// PROMPT VERSIONING SYSTEM
+// ============================================================================
+
+model PromptVersion {
+  id        String  @id @default(cuid())
+  promptId  String  @map("prompt_id")
+  version   String // Version number (e.g., "1.0.0", "1.1.0")
+  content   String // Prompt content for this version
+  variables Json? // Prompt variables for this version
+  config    Json? // Configuration for this version
+  changelog String? // What changed in this version
+  active    Boolean @default(false) // Whether this is the active version
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  metadata  Json?
+
+  // Relations
+  prompt AIPrompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@unique([promptId, version])
+  @@index([promptId, active])
+  @@map("prompt_versions")
+}
+
+// ============================================================================
+// COMPONENT LIBRARY SYSTEM
+// ============================================================================
+
+model ComponentLibrary {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  displayName String   @map("display_name")
+  description String?
+  version     String   @default("1.0.0")
+  components  Json     @default("[]") // Array of component definitions
+  category    String?
+  tags        String[]
+  public      Boolean  @default(false)
+
+  // Audit fields
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  version_num Int      @default(1) @map("version_num")
+  metadata    Json?
+
+  @@map("component_libraries")
+}
+
+// ============================================================================
+// NOTIFICATION SYSTEM
+// ============================================================================
+
+model Notification {
+  id      String    @id @default(cuid())
+  title   String
+  message String
+  type    String    @default("info") // info, success, warning, error
+  userId  String?   @map("user_id") // Specific user (null for broadcast)
+  channel String    @default("app") // app, email, sms, webhook
+  status  String    @default("pending") // pending, sent, failed, read
+  readAt  DateTime? @map("read_at")
+  sentAt  DateTime? @map("sent_at")
+  data    Json? // Additional notification data
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  metadata  Json?
+
+  @@index([userId, status])
+  @@index([type])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+// ============================================================================
+// WEBHOOK SYSTEM
+// ============================================================================
+
+model Webhook {
+  id         String   @id @default(cuid())
+  name       String
+  url        String
+  events     String[] // Array of event types to listen for
+  secret     String? // Webhook secret for verification
+  headers    Json? // Custom headers to send
+  active     Boolean  @default(true)
+  retryCount Int      @default(3) @map("retry_count")
+  timeout    Int      @default(30) // Timeout in seconds
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  version   Int      @default(1)
+  metadata  Json?
+
+  // Relations
+  projectId  String?           @map("project_id")
+  project    Project?          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  deliveries WebhookDelivery[]
+
+  @@map("webhooks")
+}
+
+model WebhookDelivery {
+  id         String    @id @default(cuid())
+  webhookId  String    @map("webhook_id")
+  event      String // Event that triggered this delivery
+  payload    Json // Payload sent
+  response   Json? // Response received
+  status     String // success, failed, pending
+  statusCode Int?      @map("status_code") // HTTP status code
+  attempts   Int       @default(1)
+  nextRetry  DateTime? @map("next_retry")
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId, status])
+  @@index([event])
+  @@map("webhook_deliveries")
+}
+
+// ============================================================================
+// CACHE SYSTEM
+// ============================================================================
+
+model CacheEntry {
+  id        String    @id @default(cuid())
+  key       String    @unique
+  value     Json // Cached value
+  ttl       Int? // Time to live in seconds
+  expiresAt DateTime? @map("expires_at")
+  tags      String[] // Cache tags for invalidation
+  size      Int? // Size in bytes
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([expiresAt])
+  @@index([tags])
+  @@map("cache_entries")
+}
+
+// ============================================================================
+// SEARCH INDEX SYSTEM
+// ============================================================================
+
+model SearchIndex {
+  id         String   @id @default(cuid())
+  entityType String   @map("entity_type") // Type of entity being indexed
+  entityId   String   @map("entity_id") // ID of the entity
+  content    String // Searchable content
+  title      String? // Title for search results
+  summary    String? // Summary for search results
+  keywords   String[] // Keywords for search
+  boost      Float    @default(1.0) // Search boost factor
+  language   String   @default("en") // Content language
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([entityType, entityId])
+  @@index([entityType])
+  @@index([keywords])
+  @@map("search_indexes")
+}
+
+// ============================================================================
+// ANALYTICS SYSTEM
+// ============================================================================
+
+model AnalyticsEvent {
+  id         String   @id @default(cuid())
+  event      String // Event name
+  userId     String?  @map("user_id") // User who triggered event
+  sessionId  String?  @map("session_id") // Session ID
+  entityType String?  @map("entity_type") // Type of entity involved
+  entityId   String?  @map("entity_id") // ID of entity involved
+  properties Json? // Event properties
+  timestamp  DateTime @default(now())
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+
+  @@index([event])
+  @@index([userId])
+  @@index([timestamp])
+  @@index([entityType, entityId])
+  @@map("analytics_events")
+}
+
+// ============================================================================
+// BACKUP SYSTEM
+// ============================================================================
+
+model BackupJob {
+  id          String    @id @default(cuid())
+  name        String
+  type        String // full, incremental, differential
+  status      String    @default("pending") // pending, running, completed, failed
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  size        Int? // Backup size in bytes
+  location    String? // Backup storage location
+  checksum    String? // Backup checksum
+  errorMsg    String?   @map("error_message")
+  config      Json? // Backup configuration
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  metadata  Json?
+
+  @@index([status])
+  @@index([startedAt])
+  @@map("backup_jobs")
+}
+
+// ============================================================================
+// MIGRATION SYSTEM
+// ============================================================================
+
+model Migration {
+  id          String    @id @default(cuid())
+  name        String    @unique
+  version     String // Migration version
+  description String?
+  up_sql      String    @map("up_sql") // SQL to apply migration
+  down_sql    String?   @map("down_sql") // SQL to rollback migration
+  checksum    String // Migration checksum
+  appliedAt   DateTime? @map("applied_at")
+  appliedBy   String?   @map("applied_by")
+
+  // Audit fields
+  createdAt DateTime @default(now()) @map("created_at")
+  metadata  Json?
+
+  @@index([version])
+  @@index([appliedAt])
+  @@map("migrations")
+}
