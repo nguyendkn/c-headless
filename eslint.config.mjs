@@ -55,7 +55,7 @@ const eslintConfig = [
       'react-hooks/exhaustive-deps': 'warn',
 
       // General JavaScript/TypeScript rules
-      'no-console': 'warn',
+      'no-console': 'off',
       'no-debugger': 'error',
       'no-duplicate-imports': 'error',
       'no-unused-expressions': 'error',
