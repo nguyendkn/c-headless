@@ -11,9 +11,10 @@ import { AuthError, LoginResponse } from '@/shared/types/auth';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
+  let body: any;
   try {
     // Parse request body
-    const body = await request.json();
+    body = await request.json();
 
     // Validate input
     const validationResult = signInSchema.safeParse(body);
@@ -132,7 +133,11 @@ export async function POST(request: NextRequest) {
 
     return nextResponse;
   } catch (error) {
-    logger.error('Sign-in error');
+    logger.error('Sign-in error', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      email: body?.email || 'unknown',
+    });
 
     if (error instanceof AuthError) {
       const response: APIResponse<never> = {
