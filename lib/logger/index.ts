@@ -56,43 +56,60 @@ const createTransports = () => {
     transports.push(
       new winston.transports.Console({
         format: consoleFormat,
-        level: 'error', // Only show errors in console for cleaner development experience
+        level: 'debug', // Show all logs in development
       })
     );
   }
 
-  // File transports for production
+  // Check if we can write to file system (not on read-only platforms like Vercel)
+  const canWriteFiles =
+    !process.env.VERCEL && !process.env.RAILWAY && !process.env.RENDER;
+
+  // File transports for production (only if file system is writable)
+  if (isProduction && canWriteFiles) {
+    try {
+      // Error logs
+      transports.push(
+        new DailyRotateFile({
+          filename: 'logs/error-%DATE%.log',
+          datePattern: 'YYYY-MM-DD',
+          level: 'error',
+          format: logFormat,
+          maxSize: '20m',
+          maxFiles: '14d',
+          zippedArchive: true,
+        })
+      );
+
+      // Combined logs
+      transports.push(
+        new DailyRotateFile({
+          filename: 'logs/combined-%DATE%.log',
+          datePattern: 'YYYY-MM-DD',
+          format: logFormat,
+          maxSize: '20m',
+          maxFiles: '7d',
+          zippedArchive: true,
+        })
+      );
+    } catch (error) {
+      console.warn(
+        'Failed to create file transports, falling back to console only:',
+        error
+      );
+    }
+  }
+
+  // Always add console transport for production
   if (isProduction) {
-    // Error logs
-    transports.push(
-      new DailyRotateFile({
-        filename: 'logs/error-%DATE%.log',
-        datePattern: 'YYYY-MM-DD',
-        level: 'error',
-        format: logFormat,
-        maxSize: '20m',
-        maxFiles: '14d',
-        zippedArchive: true,
-      })
-    );
-
-    // Combined logs
-    transports.push(
-      new DailyRotateFile({
-        filename: 'logs/combined-%DATE%.log',
-        datePattern: 'YYYY-MM-DD',
-        format: logFormat,
-        maxSize: '20m',
-        maxFiles: '7d',
-        zippedArchive: true,
-      })
-    );
-
-    // Console for production (errors only)
     transports.push(
       new winston.transports.Console({
-        format: winston.format.simple(),
-        level: 'error',
+        format: winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.errors({ stack: true }),
+          winston.format.json()
+        ),
+        level: 'info', // Show info and above in production console
       })
     );
   }
@@ -100,14 +117,41 @@ const createTransports = () => {
   return transports;
 };
 
-// Create Winston logger instance
-const winstonLogger = winston.createLogger({
-  levels: LOG_LEVELS,
-  level: isDevelopment ? 'debug' : 'info',
-  format: logFormat,
-  transports: createTransports(),
-  exitOnError: false,
-});
+// Create Winston logger instance with error handling
+let winstonLogger: winston.Logger;
+
+try {
+  winstonLogger = winston.createLogger({
+    levels: LOG_LEVELS,
+    level: isDevelopment ? 'debug' : 'info',
+    format: logFormat,
+    transports: createTransports(),
+    exitOnError: false,
+    // Handle transport errors gracefully
+    exceptionHandlers: [
+      new winston.transports.Console({
+        format: winston.format.simple(),
+      }),
+    ],
+    rejectionHandlers: [
+      new winston.transports.Console({
+        format: winston.format.simple(),
+      }),
+    ],
+  });
+} catch (error) {
+  // Fallback to console logging if Winston fails
+  console.error(
+    'Failed to initialize Winston logger, falling back to console:',
+    error
+  );
+  winstonLogger = {
+    error: (message: string, meta?: any) => console.error(message, meta),
+    warn: (message: string, meta?: any) => console.warn(message, meta),
+    info: (message: string, meta?: any) => console.info(message, meta),
+    debug: (message: string, meta?: any) => console.debug(message, meta),
+  } as winston.Logger;
+}
 
 // Create logger with context support
 const createLogger = (defaultMeta: Record<string, unknown> = {}): Logger => {
