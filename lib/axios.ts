@@ -17,7 +17,7 @@ const DEFAULT_CONFIG: AxiosRequestConfig = {
   },
   withCredentials: true,
   // Custom validateStatus to handle API error responses as valid
-  validateStatus: function (status) {
+  validateStatus(status) {
     // Accept all status codes - let interceptor handle API errors
     return status >= 200 && status < 600;
   },
@@ -82,7 +82,7 @@ apiClient.interceptors.response.use(
       response.data &&
       typeof response.data === 'object'
     ) {
-      const responseData = response.data as any;
+      const responseData = response.data as Record<string, unknown>;
 
       // If it has APIResponse structure, log as API error (not HTTP error)
       if (
@@ -126,7 +126,7 @@ apiClient.interceptors.response.use(
 
     // Check if this is a structured API response (not a network error)
     if (error.response?.data && typeof error.response.data === 'object') {
-      const responseData = error.response.data as any;
+      const responseData = error.response.data as Record<string, unknown>;
 
       // If it has the APIResponse structure, treat it as a valid response
       if (
@@ -193,7 +193,7 @@ apiClient.interceptors.response.use(
               error.config!.headers.Authorization = `Bearer ${accessToken}`;
               return apiClient.request(error.config!);
             }
-          } catch (refreshError) {
+          } catch {
             // Refresh failed, clear tokens and redirect to login
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');

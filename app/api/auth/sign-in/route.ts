@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
         message: 'Invalid data',
         timestamp: new Date().toISOString(),
         details: {
-          validationErrors: validationResult.error.issues.map((err: any) => ({
+          validationErrors: validationResult.error.issues.map(err => ({
             field: err.path.join('.'),
             message: err.message,
           })),

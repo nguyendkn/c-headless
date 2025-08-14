@@ -56,7 +56,7 @@ export default function Page() {
         router.push('/apps'); // Redirect to apps page
       }
       // Error will be handled by useEffect above
-    } catch (err) {
+    } catch {
       toast.error('An unexpected error occurred. Please try again.');
     }
   }

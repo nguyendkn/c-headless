@@ -1,6 +1,6 @@
 /**
  * Middleware exports
- * 
+ *
  * This file serves as the main entry point for all middleware functions.
  * Import and export all middleware here for easy access.
  */
@@ -16,10 +16,10 @@ export { authMiddleware, AUTH_CONFIG, getAuthMatcher } from './auth';
 
 /**
  * Middleware execution order
- * 
+ *
  * The order in which middleware is executed matters.
  * Generally, follow this order:
- * 
+ *
  * 1. Security middleware (CORS, headers, etc.)
  * 2. Rate limiting
  * 3. Authentication
