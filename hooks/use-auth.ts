@@ -119,11 +119,39 @@ export const useAuth = () => {
     }
   };
 
-  const signOut = (): void => {
+  const signOut = async (): Promise<void> => {
+    try {
+      // Call the sign-out API to clear httpOnly cookies
+      await api.post('/auth/sign-out');
+    } catch (error) {
+      console.error('Error during sign-out API call:', error);
+      // Continue with local cleanup even if API call fails
+    }
+
+    // Clear localStorage tokens
     tokenManager.clearTokens();
-    // Optionally redirect to sign-in page
+
+    // Redirect to sign-in page
     if (typeof window !== 'undefined') {
       window.location.href = '/auth/sign-in';
+    }
+  };
+
+  const getCurrentUser = (): Session | null => {
+    const token = tokenManager.getAccessToken();
+    if (!token) return null;
+
+    try {
+      // Decode JWT token to get user info
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return {
+        id: payload.id,
+        email: payload.email,
+        name: payload.name,
+      };
+    } catch (error) {
+      console.error('Failed to decode token:', error);
+      return null;
     }
   };
 
@@ -131,6 +159,7 @@ export const useAuth = () => {
     signUp,
     signIn,
     signOut,
+    getCurrentUser,
     isLoading,
     error,
     isAuthenticated: tokenManager.isAuthenticated(),
