@@ -868,18 +868,14 @@ model ValidationResult {
 model User {
   id          String    @id @default(cuid())
   email       String    @unique
-  username    String?   @unique
-  firstName   String?   @map("first_name")
-  lastName    String?   @map("last_name")
-  avatar      String?
+  name        String
+  password    String    // Hashed password
   status      String    @default("active") // active, inactive, suspended
   lastLoginAt DateTime? @map("last_login_at")
 
   // Audit fields
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-  version   Int      @default(1)
-  metadata  Json?
 
   // Relations
   roles    UserRole[]
