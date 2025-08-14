@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       logger.warn('Validation failed');
       const response: APIResponse<never> = {
         success: false,
-        message: 'Dữ liệu không hợp lệ',
+        message: 'Invalid data',
         timestamp: new Date().toISOString(),
         details: {
           validationErrors: validationResult.error.issues.map((err: any) => ({
@@ -41,10 +41,10 @@ export async function POST(request: NextRequest) {
     });
 
     if (existingUser) {
-      logger.warn('User registration attempt with existing email');
+      logger.debug('User registration attempt with existing email', { email });
       const response: APIResponse<never> = {
         success: false,
-        message: 'Email đã được sử dụng',
+        message: 'Email already exists',
         timestamp: new Date().toISOString(),
       };
       return NextResponse.json(response, { status: 409 });
@@ -93,7 +93,27 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     };
 
-    return NextResponse.json(response, { status: 201 });
+    // Create response with cookies
+    const nextResponse = NextResponse.json(response, { status: 201 });
+
+    // Set httpOnly cookies for security
+    nextResponse.cookies.set('accessToken', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60, // 15 minutes
+      path: '/',
+    });
+
+    nextResponse.cookies.set('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+      path: '/',
+    });
+
+    return nextResponse;
   } catch (error) {
     logger.error('Sign-up error');
 
@@ -108,7 +128,7 @@ export async function POST(request: NextRequest) {
 
     const response: APIResponse<never> = {
       success: false,
-      message: 'Đã xảy ra lỗi trong quá trình đăng ký',
+      message: 'An error occurred during registration',
       timestamp: new Date().toISOString(),
     };
     return NextResponse.json(response, { status: 500 });

@@ -18,19 +18,20 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { GalleryVerticalEnd } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 const formSchema = z
   .object({
-    name: z.string().min(2, 'Tên phải có ít nhất 2 ký tự'),
-    email: z.string().email('Vui lòng nhập địa chỉ email hợp lệ'),
-    password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
-    confirmPassword: z.string().min(6, 'Xác nhận mật khẩu là bắt buộc'),
+    name: z.string().min(2, 'Name must be at least 2 characters'),
+    email: z.string().email('Please enter a valid email address'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+    confirmPassword: z.string().min(6, 'Password confirmation is required'),
   })
   .refine(data => data.password === data.confirmPassword, {
-    message: 'Mật khẩu xác nhận không khớp',
+    message: 'Password confirmation does not match',
     path: ['confirmPassword'],
   });
 
@@ -48,18 +49,25 @@ export default function Page() {
     },
   });
 
+  // Show error toast when error state changes
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const session = await signUp(values);
 
       if (session) {
-        toast.success(`Chào mừng ${session.name}! Đăng ký thành công.`);
-        router.push('/dashboard'); // Redirect to dashboard page
-      } else if (error) {
-        toast.error(error);
+        toast.success(`Welcome ${session.name}! Registration successful.`);
+        router.push('/apps'); // Redirect to apps page
       }
+      // Error will be handled by useEffect below
     } catch (err) {
-      toast.error('Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.');
+      console.error('Unexpected error in sign-up form:', err);
+      toast.error('An unexpected error occurred. Please try again.');
     }
   }
 
@@ -77,14 +85,14 @@ export default function Page() {
               </div>
               <span className='sr-only'>Acme Inc.</span>
             </a>
-            <h1 className='text-xl font-bold'>Tạo tài khoản mới</h1>
+            <h1 className='text-xl font-bold'>Create New Account</h1>
             <div className='text-center text-sm'>
-              Đã có tài khoản?{' '}
+              Already have an account?{' '}
               <Link
                 href='/auth/sign-in'
                 className='underline underline-offset-4'
               >
-                Đăng nhập
+                Sign in
               </Link>
             </div>
           </div>
@@ -96,17 +104,15 @@ export default function Page() {
                 name='name'
                 render={({ field }) => (
                   <FormItem className='flex flex-col items-start'>
-                    <FormLabel>Tên</FormLabel>
+                    <FormLabel>Name</FormLabel>
                     <FormControl className='w-full'>
                       <Input
                         type='text'
-                        placeholder='Nhập tên của bạn'
+                        placeholder='Enter your name'
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
-                      Nhập tên hiển thị của bạn.
-                    </FormDescription>
+                    <FormDescription>Enter your display name.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -125,9 +131,7 @@ export default function Page() {
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
-                      Nhập địa chỉ email của bạn.
-                    </FormDescription>
+                    <FormDescription>Enter your email address.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -138,11 +142,11 @@ export default function Page() {
                 name='password'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Mật khẩu</FormLabel>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <PasswordInput placeholder='Nhập mật khẩu' {...field} />
+                      <PasswordInput placeholder='Enter password' {...field} />
                     </FormControl>
-                    <FormDescription>Nhập mật khẩu của bạn.</FormDescription>
+                    <FormDescription>Enter your password.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -153,15 +157,15 @@ export default function Page() {
                 name='confirmPassword'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Xác nhận mật khẩu</FormLabel>
+                    <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
                       <PasswordInput
-                        placeholder='Nhập lại mật khẩu'
+                        placeholder='Re-enter password'
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      Nhập lại mật khẩu để xác nhận.
+                      Re-enter your password to confirm.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -169,7 +173,7 @@ export default function Page() {
               />
 
               <Button type='submit' className='w-full' disabled={isLoading}>
-                {isLoading ? 'Đang đăng ký...' : 'Đăng ký'}
+                {isLoading ? 'Creating account...' : 'Sign Up'}
               </Button>
             </form>
           </Form>

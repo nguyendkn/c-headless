@@ -73,12 +73,15 @@ export const useAuth = () => {
         tokenManager.setTokens(accessToken, refreshToken);
         return session;
       } else {
-        setError(response.message || 'Đăng ký thất bại');
+        // This is an expected API error response, not an exception
+        setError(response.message || 'Registration failed');
         return null;
       }
     } catch (err: any) {
+      // This is for unexpected errors (network issues, etc.)
+      console.error('Unexpected error during registration:', err);
       const errorMessage =
-        err.message || 'Đã xảy ra lỗi trong quá trình đăng ký';
+        err.message || 'An error occurred during registration';
       setError(errorMessage);
       return null;
     } finally {
@@ -101,12 +104,14 @@ export const useAuth = () => {
         tokenManager.setTokens(accessToken, refreshToken);
         return session;
       } else {
-        setError(response.message || 'Đăng nhập thất bại');
+        // This is an expected API error response, not an exception
+        setError(response.message || 'Sign in failed');
         return null;
       }
     } catch (err: any) {
-      const errorMessage =
-        err.message || 'Đã xảy ra lỗi trong quá trình đăng nhập';
+      // This is for unexpected errors (network issues, etc.)
+      console.error('Unexpected error during sign in:', err);
+      const errorMessage = err.message || 'An error occurred during sign in';
       setError(errorMessage);
       return null;
     } finally {

@@ -121,5 +121,12 @@
     ".eslintrc.*": ".eslintignore",
     ".prettierrc.*": ".prettierignore",
     "tailwind.config.*": "postcss.config.*"
-  }
+  },
+  "cSpell.words": [
+    "cheadlesscms",
+    "cmdk",
+    "embla",
+    "sonner",
+    "vaul"
+  ]
 }

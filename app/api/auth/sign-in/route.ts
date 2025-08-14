@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       logger.warn('Validation failed');
       const response: APIResponse<never> = {
         success: false,
-        message: 'Dữ liệu không hợp lệ',
+        message: 'Invalid data',
         timestamp: new Date().toISOString(),
         details: {
           validationErrors: validationResult.error.issues.map((err: any) => ({
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       logger.warn('Sign-in attempt with non-existent email');
       const response: APIResponse<never> = {
         success: false,
-        message: 'Email hoặc mật khẩu không đúng',
+        message: 'Invalid email or password',
         timestamp: new Date().toISOString(),
       };
       return NextResponse.json(response, { status: 401 });
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       logger.warn('Sign-in attempt with inactive user');
       const response: APIResponse<never> = {
         success: false,
-        message: 'Tài khoản đã bị vô hiệu hóa',
+        message: 'Account has been deactivated',
         timestamp: new Date().toISOString(),
       };
       return NextResponse.json(response, { status: 401 });
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
       logger.warn('Sign-in attempt with invalid password');
       const response: APIResponse<never> = {
         success: false,
-        message: 'Email hoặc mật khẩu không đúng',
+        message: 'Invalid email or password',
         timestamp: new Date().toISOString(),
       };
       return NextResponse.json(response, { status: 401 });
@@ -110,7 +110,27 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     };
 
-    return NextResponse.json(response, { status: 200 });
+    // Create response with cookies
+    const nextResponse = NextResponse.json(response, { status: 200 });
+
+    // Set httpOnly cookies for security
+    nextResponse.cookies.set('accessToken', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60, // 15 minutes
+      path: '/',
+    });
+
+    nextResponse.cookies.set('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60, // 7 days
+      path: '/',
+    });
+
+    return nextResponse;
   } catch (error) {
     logger.error('Sign-in error');
 
@@ -125,7 +145,7 @@ export async function POST(request: NextRequest) {
 
     const response: APIResponse<never> = {
       success: false,
-      message: 'Đã xảy ra lỗi trong quá trình đăng nhập',
+      message: 'An error occurred during sign in',
       timestamp: new Date().toISOString(),
     };
     return NextResponse.json(response, { status: 500 });

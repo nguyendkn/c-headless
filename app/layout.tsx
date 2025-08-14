@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { Toaster } from 'sonner';
 import './globals.css';
 
 const geistSans = Geist({
@@ -13,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'C-Headless CMS - Headless CMS thế hệ mới với AI tích hợp',
+  title: 'C-Headless CMS - Next Generation Headless CMS with AI Integration',
   description:
-    'Nền tảng quản lý nội dung tiên tiến với AI tích hợp, template builder trực quan và khả năng tùy chỉnh không giới hạn cho ứng dụng hiện đại.',
+    'Advanced content management platform with integrated AI, intuitive template builder and unlimited customization capabilities for modern applications.',
   keywords: [
     'headless cms',
     'ai cms',
@@ -29,18 +30,18 @@ export const metadata: Metadata = {
   creator: 'C-Headless CMS',
   publisher: 'C-Headless CMS',
   openGraph: {
-    title: 'C-Headless CMS - Headless CMS thế hệ mới',
+    title: 'C-Headless CMS - Next Generation Headless CMS',
     description:
-      'Nền tảng quản lý nội dung tiên tiến với AI tích hợp, template builder trực quan và khả năng tùy chỉnh không giới hạn.',
+      'Advanced content management platform with integrated AI, intuitive template builder and unlimited customization capabilities.',
     type: 'website',
-    locale: 'vi_VN',
+    locale: 'en_US',
     siteName: 'C-Headless CMS',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'C-Headless CMS - Headless CMS thế hệ mới',
+    title: 'C-Headless CMS - Next Generation Headless CMS',
     description:
-      'Nền tảng quản lý nội dung tiên tiến với AI tích hợp và template builder trực quan.',
+      'Advanced content management platform with integrated AI and intuitive template builder.',
     creator: '@cheadlesscms',
   },
   robots: {
@@ -65,11 +66,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang='vi'>
+    <html lang='en'>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <Toaster />
       </body>
     </html>
   );

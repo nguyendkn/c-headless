@@ -18,13 +18,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { GalleryVerticalEnd } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
 const formSchema = z.object({
-  email: z.string().email('Vui lòng nhập địa chỉ email hợp lệ'),
-  password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
 export default function Page() {
@@ -39,18 +40,24 @@ export default function Page() {
     },
   });
 
+  // Show error toast when error state changes
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const session = await signIn(values);
 
       if (session) {
-        toast.success(`Chào mừng ${session.name}! Đăng nhập thành công.`);
-        router.push('/dashboard'); // Redirect to dashboard page
-      } else if (error) {
-        toast.error(error);
+        toast.success(`Welcome ${session.name}! Sign in successful.`);
+        router.push('/apps'); // Redirect to apps page
       }
+      // Error will be handled by useEffect above
     } catch (err) {
-      toast.error('Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.');
+      toast.error('An unexpected error occurred. Please try again.');
     }
   }
 
@@ -68,14 +75,14 @@ export default function Page() {
               </div>
               <span className='sr-only'>Acme Inc.</span>
             </a>
-            <h1 className='text-xl font-bold'>Đăng nhập</h1>
+            <h1 className='text-xl font-bold'>Sign In</h1>
             <div className='text-center text-sm'>
-              Chưa có tài khoản?{' '}
+              Don&apos;t have an account?{' '}
               <Link
                 href='/auth/sign-up'
                 className='underline underline-offset-4'
               >
-                Đăng ký
+                Sign up
               </Link>
             </div>
           </div>
@@ -95,9 +102,7 @@ export default function Page() {
                         {...field}
                       />
                     </FormControl>
-                    <FormDescription>
-                      Nhập địa chỉ email của bạn.
-                    </FormDescription>
+                    <FormDescription>Enter your email address.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -108,18 +113,18 @@ export default function Page() {
                 name='password'
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Mật khẩu</FormLabel>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <PasswordInput placeholder='Nhập mật khẩu' {...field} />
+                      <PasswordInput placeholder='Enter password' {...field} />
                     </FormControl>
-                    <FormDescription>Nhập mật khẩu của bạn.</FormDescription>
+                    <FormDescription>Enter your password.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
               <Button type='submit' className='w-full' disabled={isLoading}>
-                {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                {isLoading ? 'Signing in...' : 'Sign In'}
               </Button>
             </form>
           </Form>

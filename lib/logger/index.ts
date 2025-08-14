@@ -56,7 +56,7 @@ const createTransports = () => {
     transports.push(
       new winston.transports.Console({
         format: consoleFormat,
-        level: 'debug',
+        level: 'error', // Only show errors in console for cleaner development experience
       })
     );
   }

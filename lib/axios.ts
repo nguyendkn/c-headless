@@ -16,6 +16,11 @@ const DEFAULT_CONFIG: AxiosRequestConfig = {
     Accept: 'application/json',
   },
   withCredentials: true,
+  // Custom validateStatus to handle API error responses as valid
+  validateStatus: function (status) {
+    // Accept all status codes - let interceptor handle API errors
+    return status >= 200 && status < 600;
+  },
 };
 
 export const apiClient: AxiosInstance = axios.create(DEFAULT_CONFIG);
@@ -71,6 +76,35 @@ apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
     const correlationId = response.config.headers['X-Correlation-ID'];
 
+    // Check if this is an API error response (4xx/5xx with structured data)
+    if (
+      response.status >= 400 &&
+      response.data &&
+      typeof response.data === 'object'
+    ) {
+      const responseData = response.data as any;
+
+      // If it has APIResponse structure, log as API error (not HTTP error)
+      if (
+        responseData.hasOwnProperty('success') &&
+        responseData.hasOwnProperty('message')
+      ) {
+        console.debug(
+          {
+            type: 'API_ERROR_RESPONSE',
+            correlationId,
+            status: response.status,
+            url: response.config.url,
+            method: response.config.method?.toUpperCase(),
+            apiResponse: responseData,
+            timestamp: new Date().toISOString(),
+          },
+          'API error response (structured)'
+        );
+        return response; // Return as normal response
+      }
+    }
+
     console.debug(
       {
         type: 'HTTP_RESPONSE',
@@ -89,6 +123,36 @@ apiClient.interceptors.response.use(
   },
   async (error: AxiosError) => {
     const correlationId = error.config?.headers?.['X-Correlation-ID'];
+
+    // Check if this is a structured API response (not a network error)
+    if (error.response?.data && typeof error.response.data === 'object') {
+      const responseData = error.response.data as any;
+
+      // If it has the APIResponse structure, treat it as a valid response
+      if (
+        responseData.hasOwnProperty('success') &&
+        responseData.hasOwnProperty('message')
+      ) {
+        console.debug(
+          {
+            type: 'API_ERROR_RESPONSE',
+            correlationId,
+            status: error.response.status,
+            url: error.config?.url,
+            method: error.config?.method?.toUpperCase(),
+            apiResponse: responseData,
+            timestamp: new Date().toISOString(),
+          },
+          'API error response (structured)'
+        );
+
+        // Return the response instead of rejecting for structured API errors
+        return {
+          ...error.response,
+          data: responseData,
+        };
+      }
+    }
 
     console.error(
       {

@@ -2,11 +2,11 @@ import { z } from 'zod';
 
 // Sign-in validation schema
 export const signInSchema = z.object({
-  email: z.string().min(1, 'Email là bắt buộc').email('Email không hợp lệ'),
+  email: z.string().min(1, 'Email is required').email('Invalid email address'),
   password: z
     .string()
-    .min(1, 'Mật khẩu là bắt buộc')
-    .min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+    .min(1, 'Password is required')
+    .min(6, 'Password must be at least 6 characters'),
 });
 
 // Sign-up validation schema
@@ -14,19 +14,22 @@ export const signUpSchema = z
   .object({
     name: z
       .string()
-      .min(1, 'Tên là bắt buộc')
-      .min(2, 'Tên phải có ít nhất 2 ký tự')
-      .max(50, 'Tên không được quá 50 ký tự'),
-    email: z.string().min(1, 'Email là bắt buộc').email('Email không hợp lệ'),
+      .min(1, 'Name is required')
+      .min(2, 'Name must be at least 2 characters')
+      .max(50, 'Name must not exceed 50 characters'),
+    email: z
+      .string()
+      .min(1, 'Email is required')
+      .email('Invalid email address'),
     password: z
       .string()
-      .min(1, 'Mật khẩu là bắt buộc')
-      .min(6, 'Mật khẩu phải có ít nhất 6 ký tự')
-      .max(100, 'Mật khẩu không được quá 100 ký tự'),
-    confirmPassword: z.string().min(1, 'Xác nhận mật khẩu là bắt buộc'),
+      .min(1, 'Password is required')
+      .min(6, 'Password must be at least 6 characters')
+      .max(100, 'Password must not exceed 100 characters'),
+    confirmPassword: z.string().min(1, 'Password confirmation is required'),
   })
   .refine(data => data.password === data.confirmPassword, {
-    message: 'Mật khẩu xác nhận không khớp',
+    message: 'Password confirmation does not match',
     path: ['confirmPassword'],
   });
 
