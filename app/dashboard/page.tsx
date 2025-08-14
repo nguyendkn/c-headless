@@ -15,20 +15,22 @@ export default function DashboardPage() {
             Đăng xuất
           </Button>
         </div>
-        
+
         <div className='grid gap-6'>
           <div className='bg-card p-6 rounded-lg border'>
             <h2 className='text-xl font-semibold mb-4'>Chào mừng!</h2>
             <p className='text-muted-foreground'>
-              Bạn đã đăng nhập thành công. Đây là trang dashboard được bảo vệ bởi authentication middleware.
+              Bạn đã đăng nhập thành công. Đây là trang dashboard được bảo vệ
+              bởi authentication middleware.
             </p>
             <div className='mt-4'>
               <p className='text-sm'>
-                <strong>Trạng thái xác thực:</strong> {isAuthenticated ? '✅ Đã xác thực' : '❌ Chưa xác thực'}
+                <strong>Trạng thái xác thực:</strong>{' '}
+                {isAuthenticated ? '✅ Đã xác thực' : '❌ Chưa xác thực'}
               </p>
             </div>
           </div>
-          
+
           <div className='bg-card p-6 rounded-lg border'>
             <h3 className='text-lg font-semibold mb-2'>Tính năng middleware</h3>
             <ul className='text-sm text-muted-foreground space-y-1'>
