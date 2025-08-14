@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-export default function Home() {
+export default function Page() {
   return (
     <div className='min-h-screen bg-neutral-50 dark:bg-neutral-950'>
       {/* Header */}

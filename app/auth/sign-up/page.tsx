@@ -22,29 +22,38 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-const formSchema = z.object({
-  email: z.string().email('Vui lòng nhập địa chỉ email hợp lệ'),
-  password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
-});
+const formSchema = z
+  .object({
+    name: z.string().min(2, 'Tên phải có ít nhất 2 ký tự'),
+    email: z.string().email('Vui lòng nhập địa chỉ email hợp lệ'),
+    password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+    confirmPassword: z.string().min(6, 'Xác nhận mật khẩu là bắt buộc'),
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    message: 'Mật khẩu xác nhận không khớp',
+    path: ['confirmPassword'],
+  });
 
 export default function Page() {
-  const { signIn, isLoading, error } = useAuth();
+  const { signUp, isLoading, error } = useAuth();
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: '',
       email: '',
       password: '',
+      confirmPassword: '',
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
-      const session = await signIn(values);
+      const session = await signUp(values);
 
       if (session) {
-        toast.success(`Chào mừng ${session.name}! Đăng nhập thành công.`);
+        toast.success(`Chào mừng ${session.name}! Đăng ký thành công.`);
         router.push('/dashboard'); // Redirect to dashboard page
       } else if (error) {
         toast.error(error);
@@ -68,20 +77,41 @@ export default function Page() {
               </div>
               <span className='sr-only'>Acme Inc.</span>
             </a>
-            <h1 className='text-xl font-bold'>Đăng nhập</h1>
+            <h1 className='text-xl font-bold'>Tạo tài khoản mới</h1>
             <div className='text-center text-sm'>
-              Chưa có tài khoản?{' '}
+              Đã có tài khoản?{' '}
               <Link
-                href='/auth/sign-up'
+                href='/auth/sign-in'
                 className='underline underline-offset-4'
               >
-                Đăng ký
+                Đăng nhập
               </Link>
             </div>
           </div>
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+              <FormField
+                control={form.control}
+                name='name'
+                render={({ field }) => (
+                  <FormItem className='flex flex-col items-start'>
+                    <FormLabel>Tên</FormLabel>
+                    <FormControl className='w-full'>
+                      <Input
+                        type='text'
+                        placeholder='Nhập tên của bạn'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Nhập tên hiển thị của bạn.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <FormField
                 control={form.control}
                 name='email'
@@ -118,8 +148,28 @@ export default function Page() {
                 )}
               />
 
+              <FormField
+                control={form.control}
+                name='confirmPassword'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Xác nhận mật khẩu</FormLabel>
+                    <FormControl>
+                      <PasswordInput
+                        placeholder='Nhập lại mật khẩu'
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Nhập lại mật khẩu để xác nhận.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
               <Button type='submit' className='w-full' disabled={isLoading}>
-                {isLoading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                {isLoading ? 'Đang đăng ký...' : 'Đăng ký'}
               </Button>
             </form>
           </Form>

@@ -25,6 +25,14 @@ apiClient.interceptors.request.use(
     const correlationId = uuidv7();
     config.headers['X-Correlation-ID'] = correlationId;
 
+    // Auto-attach access token if available
+    if (typeof window !== 'undefined') {
+      const accessToken = localStorage.getItem('accessToken');
+      if (accessToken && !config.headers.Authorization) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
+      }
+    }
+
     // Log request
     console.debug(
       {
@@ -96,6 +104,45 @@ apiClient.interceptors.response.use(
       },
       'HTTP response error'
     );
+
+    // Handle 401 Unauthorized - token refresh logic
+    if (error.response?.status === 401 && !error.config?._retry) {
+      error.config!._retry = true;
+
+      if (typeof window !== 'undefined') {
+        const refreshToken = localStorage.getItem('refreshToken');
+
+        if (refreshToken) {
+          try {
+            // Try to refresh token
+            const refreshResponse = await apiClient.post('/auth/refresh', {
+              refreshToken,
+            });
+
+            if (refreshResponse.data.success && refreshResponse.data.data) {
+              const { accessToken, refreshToken: newRefreshToken } =
+                refreshResponse.data.data;
+              localStorage.setItem('accessToken', accessToken);
+              localStorage.setItem('refreshToken', newRefreshToken);
+
+              // Retry original request with new token
+              error.config!.headers.Authorization = `Bearer ${accessToken}`;
+              return apiClient.request(error.config!);
+            }
+          } catch (refreshError) {
+            // Refresh failed, clear tokens and redirect to login
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            window.location.href = '/auth/sign-in';
+            return Promise.reject(createApiError(error));
+          }
+        } else {
+          // No refresh token, redirect to login
+          window.location.href = '/auth/sign-in';
+          return Promise.reject(createApiError(error));
+        }
+      }
+    }
 
     if (shouldRetry(error) && !error.config?._retry) {
       error.config!._retry = true;
