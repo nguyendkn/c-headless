@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { APIResponse } from '@/shared/types/api';
-import { logger } from '@/lib/logger';
 import { generateAccessToken, generateRefreshToken } from '@/lib/auth';
 import { verifyToken } from '@/lib/jwt';
+import logger from '@/lib/logger';
+import { APIResponse } from '@/shared/types/api';
 import { Session } from '@/shared/types/session';
+import { NextRequest, NextResponse } from 'next/server';
 
 interface RefreshTokenRequest {
   refreshToken: string;

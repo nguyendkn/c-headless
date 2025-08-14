@@ -1,12 +1,12 @@
 import logger from '@/lib/logger';
 import { APIResponse } from '@/shared/types/api';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 /**
  * POST /api/auth/sign-out
  * Signs out the user by clearing authentication cookies
  */
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     logger.info('User sign-out initiated');
 

@@ -11,7 +11,7 @@ import { AuthError, LoginResponse } from '@/shared/types/auth';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
-  let body: any;
+  let body: unknown;
   try {
     // Parse request body
     body = await request.json();
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
     logger.error('Sign-in error', {
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
-      email: body?.email || 'unknown',
+      email: (body as { email?: string })?.email || 'unknown',
     });
 
     if (error instanceof AuthError) {

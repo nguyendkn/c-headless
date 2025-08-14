@@ -41,7 +41,7 @@ export function NavUser() {
   useEffect(() => {
     setIsClient(true);
     setUser(getCurrentUser());
-  }, []); // Empty dependency array to run only once after mount
+  }, []);
 
   // If not yet hydrated or no user is found, don't render the component
   if (!isClient || !user) {
