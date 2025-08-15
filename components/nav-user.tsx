@@ -49,17 +49,35 @@ const UserSettings = lazy(() =>
 
 export function NavUser() {
   const { isMobile } = useSidebar();
-  const { getCurrentUser, signOut } = useAuth();
+  const { signOut } = useAuth();
   const router = useRouter();
   const [user, setUser] = useState<Session | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Handle client-side hydration
+  // Handle client-side hydration and get user info
   useEffect(() => {
     setIsClient(true);
-    setUser(getCurrentUser());
-  }, [getCurrentUser]);
+
+    // Get user directly from token without using getCurrentUser from hook
+    const token =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('accessToken')
+        : null;
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setUser({
+          id: payload.id,
+          email: payload.email,
+          name: payload.name,
+        });
+      } catch (error) {
+        console.error('Failed to decode token:', error);
+        setUser(null);
+      }
+    }
+  }, []); // Empty dependency array to run only once
 
   // If not yet hydrated or no user is found, don't render the component
   if (!isClient || !user) {

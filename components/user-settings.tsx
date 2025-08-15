@@ -30,7 +30,7 @@ interface Props {
 export function UserSettings({
   isSettingsOpen,
   setIsSettingsOpen,
-  user: _user,
+  user,
 }: Props) {
   const [activeTab, setActiveTab] = useState('profile');
 
@@ -162,7 +162,7 @@ export function UserSettings({
                             <div className='flex justify-start items-center self-stretch flex-grow-0 flex-shrink-0 relative'>
                               <div className='flex-grow-0 flex-shrink-0 w-36 h-5 relative overflow-hidden'>
                                 <p className='w-36 h-5 absolute left-0 top-0 text-sm font-medium text-left text-foreground'>
-                                  Đào Khôi Nguyên
+                                  {user?.name || 'User'}
                                 </p>
                               </div>
                             </div>
@@ -199,7 +199,7 @@ export function UserSettings({
                           <div className='flex justify-start items-start flex-grow-0 flex-shrink-0 relative overflow-hidden gap-1'>
                             <div className='self-stretch flex-grow-0 flex-shrink-0 w-40 relative overflow-hidden'>
                               <p className='w-40 h-5 absolute left-0 top-0 text-sm text-left text-foreground'>
-                                nguyendk.on@gmail.com
+                                {user?.email || 'user@example.com'}
                               </p>
                             </div>
                             <div className='flex flex-col justify-center items-start self-stretch flex-grow-0 flex-shrink-0 p-px'>
@@ -295,7 +295,7 @@ export function UserSettings({
                                 </div>
                                 <div className='flex-grow-0 flex-shrink-0 w-44 h-5 relative overflow-hidden'>
                                   <p className='w-44 h-5 absolute left-0 top-0 text-sm text-left text-muted-foreground'>
-                                    • nguyendk.on@gmail.com
+                                    • {user?.email || 'user@example.com'}
                                   </p>
                                 </div>
                               </div>
