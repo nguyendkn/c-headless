@@ -12,9 +12,8 @@
   "editor.insertSpaces": true,
   "editor.detectIndentation": false,
   "editor.trimAutoWhitespace": true,
-  "editor.rulers": [80],
   "editor.wordWrap": "bounded",
-  "editor.wordWrapColumn": 80,
+  "editor.wordWrapColumn": 100,
 
   // File settings
   "files.eol": "\n",

@@ -1,14 +1,14 @@
 'use client';
 
 import {
-  BadgeCheck,
   Bell,
   ChevronsUpDown,
   CreditCard,
   LogOut,
+  Settings,
   Sparkles,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -30,18 +30,36 @@ import { useAuth } from '@/hooks/use-auth';
 import { Session } from '@/shared/types/session';
 import { useRouter } from 'next/navigation';
 
+// Generate initials from name for avatar fallback - moved outside component for better performance
+const getInitials = (name: string) => {
+  return name
+    .split(' ')
+    .map(word => word.charAt(0))
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+};
+
+// Lazy load UserSettings component
+const UserSettings = lazy(() =>
+  import('@/components/user-settings').then(module => ({
+    default: module.UserSettings,
+  }))
+);
+
 export function NavUser() {
   const { isMobile } = useSidebar();
   const { getCurrentUser, signOut } = useAuth();
   const router = useRouter();
   const [user, setUser] = useState<Session | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Handle client-side hydration
   useEffect(() => {
     setIsClient(true);
     setUser(getCurrentUser());
-  }, []);
+  }, [getCurrentUser]);
 
   // If not yet hydrated or no user is found, don't render the component
   if (!isClient || !user) {
@@ -57,16 +75,6 @@ export function NavUser() {
       // Fallback redirect if signOut fails
       router.push('/auth/sign-in');
     }
-  };
-
-  // Generate initials from name for avatar fallback
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
   };
 
   return (
@@ -118,9 +126,9 @@ export function NavUser() {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
+              <DropdownMenuItem onClick={() => setIsSettingsOpen(true)}>
+                <Settings />
+                Settings
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <CreditCard />
@@ -139,6 +147,17 @@ export function NavUser() {
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
+
+      {/* Lazy loaded Settings Modal */}
+      {isSettingsOpen && (
+        <Suspense fallback={<div>Loading...</div>}>
+          <UserSettings
+            isSettingsOpen={isSettingsOpen}
+            setIsSettingsOpen={setIsSettingsOpen}
+            user={user}
+          />
+        </Suspense>
+      )}
     </SidebarMenu>
   );
 }
