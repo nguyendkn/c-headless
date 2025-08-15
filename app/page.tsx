@@ -66,10 +66,14 @@ export default function Page() {
             </nav>
 
             <div className='flex items-center space-x-4'>
-              <Button variant='ghost' size='sm'>
-                Sign In
-              </Button>
-              <Button size='sm'>Get Started</Button>
+              <Link href='/auth/sign-in'>
+                <Button variant='ghost' size='sm'>
+                  Sign In
+                </Button>
+              </Link>
+              <Link href='/auth/sign-up'>
+                <Button size='sm'>Get Started</Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -99,11 +103,13 @@ export default function Page() {
             </p>
 
             <div className='flex flex-col sm:flex-row gap-4 justify-center items-center mb-16'>
-              <Button size='lg' className='group'>
-                <Zap className='w-4 h-4 mr-2' />
-                Start Building Free
-                <ArrowRight className='w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform' />
-              </Button>
+              <Link href='/auth/sign-up'>
+                <Button size='lg' className='group'>
+                  <Zap className='w-4 h-4 mr-2' />
+                  Start Building Free
+                  <ArrowRight className='w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform' />
+                </Button>
+              </Link>
               <Button variant='outline' size='lg'>
                 <Code className='w-4 h-4 mr-2' />
                 View Documentation
@@ -707,14 +713,16 @@ export default function Page() {
           </p>
 
           <div className='flex flex-col sm:flex-row gap-4 justify-center items-center'>
-            <Button
-              size='lg'
-              className='bg-white text-neutral-900 hover:bg-neutral-100 group shadow-lg'
-            >
-              <Zap className='w-4 h-4 mr-2' />
-              Start Building Free
-              <ArrowRight className='w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform' />
-            </Button>
+            <Link href='/auth/sign-up'>
+              <Button
+                size='lg'
+                className='bg-white text-neutral-900 hover:bg-neutral-100 group shadow-lg'
+              >
+                <Zap className='w-4 h-4 mr-2' />
+                Start Building Free
+                <ArrowRight className='w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform' />
+              </Button>
+            </Link>
             <Button
               variant='outline'
               size='lg'
