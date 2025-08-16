@@ -580,10 +580,17 @@ export class MarkdownConverter {
    * Parse a table row into cells
    */
   private parseTableRow(row: string, isHeader: boolean): string[] {
-    return row
+    const cells = row
       .replace(/^\||\|$/g, '')
       .split('|')
       .map(cell => cell.trim());
+
+    // Apply header-specific processing if needed
+    if (isHeader) {
+      return cells.map(cell => cell.replace(/^\s*|\s*$/g, ''));
+    }
+
+    return cells;
   }
 
   /**
@@ -715,8 +722,15 @@ export class MarkdownConverter {
           ? `${TAILWIND_CLASSES.taskCheckbox} ${TAILWIND_CLASSES.taskChecked}`
           : `${TAILWIND_CLASSES.taskCheckbox} ${TAILWIND_CLASSES.taskUnchecked}`;
 
+        // Calculate indentation level for nested task lists
+        const indentLevel = Math.floor(indent.length / 2);
+        const marginLeft =
+          indentLevel > 0
+            ? `style="margin-left: ${indentLevel * 1.5}rem;"`
+            : '';
+
         listItems.push(`
-          <li class="${TAILWIND_CLASSES.taskItem}">
+          <li class="${TAILWIND_CLASSES.taskItem}" ${marginLeft} data-marker="${marker}">
             <input type="checkbox" ${isChecked ? 'checked' : ''} disabled class="${checkboxClass}">
             <span>${content}</span>
           </li>
@@ -749,7 +763,17 @@ export class MarkdownConverter {
 
       if (listMatch) {
         const [, indent, marker, content] = listMatch;
-        listItems.push(`<li class="${TAILWIND_CLASSES.li}">${content}</li>`);
+
+        // Calculate indentation level for nested lists
+        const indentLevel = Math.floor(indent.length / 2);
+        const marginLeft =
+          indentLevel > 0
+            ? `style="margin-left: ${indentLevel * 1.5}rem;"`
+            : '';
+
+        listItems.push(
+          `<li class="${TAILWIND_CLASSES.li}" ${marginLeft} data-marker="${marker}">${content}</li>`
+        );
         i++;
       } else if (line.trim() === '') {
         i++;
@@ -778,7 +802,17 @@ export class MarkdownConverter {
 
       if (listMatch) {
         const [, indent, marker, content] = listMatch;
-        listItems.push(`<li class="${TAILWIND_CLASSES.li}">${content}</li>`);
+
+        // Calculate indentation level for nested lists
+        const indentLevel = Math.floor(indent.length / 2);
+        const marginLeft =
+          indentLevel > 0
+            ? `style="margin-left: ${indentLevel * 1.5}rem;"`
+            : '';
+
+        listItems.push(
+          `<li class="${TAILWIND_CLASSES.li}" ${marginLeft} data-marker="${marker}">${content}</li>`
+        );
         i++;
       } else if (line.trim() === '') {
         i++;
