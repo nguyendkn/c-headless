@@ -5,5 +5,7 @@ export { Footer } from './footer';
 export { Header } from './header';
 export { HeroSection } from './hero-section';
 export { IntegrationsSection } from './integrations-section';
+export { PainPointsSection } from './pain-points-section';
+export { SellingPointsSection } from './selling-points-section';
 export { TechnologyStackSection } from './technology-stack-section';
 export { UseCasesSection } from './use-cases-section';
