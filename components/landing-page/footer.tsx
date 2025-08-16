@@ -98,10 +98,7 @@ export function Footer() {
             <h3 className='font-semibold mb-4'>Support</h3>
             <ul className='space-y-2 text-neutral-400'>
               <li>
-                <a
-                  href='#docs'
-                  className='hover:text-white transition-colors'
-                >
+                <a href='#docs' className='hover:text-white transition-colors'>
                   Documentation
                 </a>
               </li>

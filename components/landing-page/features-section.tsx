@@ -30,14 +30,12 @@ export function FeaturesSection() {
               <div className='w-12 h-12 bg-neutral-100 dark:bg-neutral-800 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform'>
                 <Database className='w-6 h-6 text-neutral-600 dark:text-neutral-400' />
               </div>
-              <CardTitle className='text-xl'>
-                Dynamic Data Management
-              </CardTitle>
+              <CardTitle className='text-xl'>Dynamic Data Management</CardTitle>
             </CardHeader>
             <CardContent>
               <p className='text-neutral-600 dark:text-neutral-300 mb-4'>
-                Create and manage data tables with flexible schemas,
-                supporting multiple field types and complex relationships.
+                Create and manage data tables with flexible schemas, supporting
+                multiple field types and complex relationships.
               </p>
               <ul className='text-sm text-neutral-500 dark:text-neutral-400 space-y-1'>
                 <li className='flex items-center'>
@@ -62,9 +60,7 @@ export function FeaturesSection() {
               <div className='w-12 h-12 bg-neutral-100 dark:bg-neutral-800 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform'>
                 <Palette className='w-6 h-6 text-neutral-600 dark:text-neutral-400' />
               </div>
-              <CardTitle className='text-xl'>
-                Visual Template Builder
-              </CardTitle>
+              <CardTitle className='text-xl'>Visual Template Builder</CardTitle>
             </CardHeader>
             <CardContent>
               <p className='text-neutral-600 dark:text-neutral-300 mb-4'>
@@ -154,9 +150,7 @@ export function FeaturesSection() {
               <div className='w-12 h-12 bg-neutral-100 dark:bg-neutral-800 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform'>
                 <Shield className='w-6 h-6 text-neutral-600 dark:text-neutral-400' />
               </div>
-              <CardTitle className='text-xl'>
-                Security & Permissions
-              </CardTitle>
+              <CardTitle className='text-xl'>Security & Permissions</CardTitle>
             </CardHeader>
             <CardContent>
               <p className='text-neutral-600 dark:text-neutral-300 mb-4'>

@@ -24,9 +24,9 @@ export function IntegrationsSection() {
             Future Integrations
           </h2>
           <p className='max-w-2xl mx-auto text-lg text-neutral-600 dark:text-neutral-300'>
-            Exciting new capabilities are on the horizon. Discover the
-            powerful integrations that will extend your content management
-            workflow beyond creation.
+            Exciting new capabilities are on the horizon. Discover the powerful
+            integrations that will extend your content management workflow
+            beyond creation.
           </p>
         </div>
 
@@ -116,8 +116,8 @@ export function IntegrationsSection() {
             <CardContent>
               <p className='text-neutral-600 dark:text-neutral-300 mb-4'>
                 Comprehensive analytics dashboard with detailed insights and
-                statistical reports when content is deployed across social
-                media and other channels.
+                statistical reports when content is deployed across social media
+                and other channels.
               </p>
               <ul className='space-y-3 text-neutral-600 dark:text-neutral-300'>
                 <li className='flex items-start'>
@@ -149,8 +149,8 @@ export function IntegrationsSection() {
                 Complete Content Ecosystem
               </h3>
               <p className='text-lg text-neutral-600 dark:text-neutral-300 mb-6'>
-                These upcoming integrations will transform C-Headless CMS into
-                a complete content ecosystem, taking you from creation to
+                These upcoming integrations will transform C-Headless CMS into a
+                complete content ecosystem, taking you from creation to
                 distribution, optimization, and analysis—all in one unified
                 platform.
               </p>

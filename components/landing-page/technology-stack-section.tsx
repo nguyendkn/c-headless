@@ -11,8 +11,8 @@ export function TechnologyStackSection() {
             Modern Technology Stack
           </h2>
           <p className='max-w-2xl mx-auto text-lg text-neutral-600 dark:text-neutral-300'>
-            Built with cutting-edge technologies to ensure optimal
-            performance, scalability, and developer experience.
+            Built with cutting-edge technologies to ensure optimal performance,
+            scalability, and developer experience.
           </p>
         </div>
 

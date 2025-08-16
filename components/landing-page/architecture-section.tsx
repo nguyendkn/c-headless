@@ -136,8 +136,8 @@ export function ArchitectureSection() {
               <CardContent>
                 <p className='text-neutral-600 dark:text-neutral-300 text-sm'>
                   <strong>View</strong> displays data, <strong>Form</strong>{' '}
-                  handles input, and <strong>Template</strong> from the
-                  builder system with drag & drop functionality.
+                  handles input, and <strong>Template</strong> from the builder
+                  system with drag & drop functionality.
                 </p>
               </CardContent>
             </Card>
@@ -151,9 +151,8 @@ export function ArchitectureSection() {
               </CardHeader>
               <CardContent>
                 <p className='text-neutral-600 dark:text-neutral-300 text-sm'>
-                  AI system with multi-provider support, intelligent agents,
-                  and workflow automation deeply integrated into the core
-                  system.
+                  AI system with multi-provider support, intelligent agents, and
+                  workflow automation deeply integrated into the core system.
                 </p>
               </CardContent>
             </Card>

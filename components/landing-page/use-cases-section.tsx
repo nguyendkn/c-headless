@@ -10,8 +10,8 @@ export function UseCasesSection() {
             Real-World Applications
           </h2>
           <p className='max-w-2xl mx-auto text-lg text-neutral-600 dark:text-neutral-300'>
-            C-Headless CMS adapts to projects of all sizes, from simple
-            websites to complex enterprise applications.
+            C-Headless CMS adapts to projects of all sizes, from simple websites
+            to complex enterprise applications.
           </p>
         </div>
 
