@@ -8,45 +8,45 @@ import { PermissionLevel } from './type';
 import { View } from './view';
 
 /**
- * Project represents a complete application/workspace
+ * App represents a complete application/workspace
  * Contains all tables, features, views, forms, filters, and reports
  */
-export interface Project extends AuditableDocument, SoftDeletable {
-  /** Project name (used as identifier) */
+export interface App extends AuditableDocument, SoftDeletable {
+  /** App name (used as identifier) */
   name: string;
-  /** Display title for the project */
+  /** Display title for the app */
   title: string;
-  /** Optional description of the project */
+  /** Optional description of the app */
   description?: string;
-  /** Project configuration */
-  config: ProjectConfig;
-  /** Project tables */
+  /** App configuration */
+  config: AppConfig;
+  /** App tables */
   tables: Table[];
-  /** Project features */
+  /** App features */
   features: Feature[];
-  /** Project views */
+  /** App views */
   views: View[];
-  /** Project forms */
+  /** App forms */
   forms: Form[];
-  /** Project filters */
+  /** App filters */
   filters: Filter[];
-  /** Project reports */
+  /** App reports */
   reports: Report[];
-  /** Project permissions */
-  permissions?: ProjectPermissions;
-  /** Project settings */
-  settings?: ProjectSettings;
-  /** Project integrations */
-  integrations?: ProjectIntegration[];
+  /** App permissions */
+  permissions?: AppPermissions;
+  /** App settings */
+  settings?: AppSettings;
+  /** App integrations */
+  integrations?: AppIntegration[];
 }
 
 /**
- * Project configuration
+ * App configuration
  */
-export interface ProjectConfig {
-  /** Project version */
+export interface AppConfig {
+  /** App version */
   version: string;
-  /** Project environment */
+  /** App environment */
   environment: 'development' | 'staging' | 'production';
   /** Database configuration */
   database?: DatabaseConfig;
@@ -477,25 +477,25 @@ export interface MonitoringConfig {
 }
 
 /**
- * Project permissions
+ * App permissions
  */
-export interface ProjectPermissions {
-  /** Project owner */
+export interface AppPermissions {
+  /** App owner */
   owner: string;
-  /** Project administrators */
+  /** App administrators */
   admins?: string[];
-  /** Project members */
+  /** App members */
   members?: string[];
   /** Public access level */
   public?: PermissionLevel;
   /** Role-based permissions */
-  roles?: Record<string, ProjectRole>;
+  roles?: Record<string, AppRole>;
 }
 
 /**
- * Project role
+ * App role
  */
-export interface ProjectRole {
+export interface AppRole {
   /** Role name */
   name: string;
   /** Role description */
@@ -507,9 +507,9 @@ export interface ProjectRole {
 }
 
 /**
- * Project settings
+ * App settings
  */
-export interface ProjectSettings {
+export interface AppSettings {
   /** Timezone */
   timezone?: string;
   /** Date format */
@@ -525,9 +525,9 @@ export interface ProjectSettings {
 }
 
 /**
- * Project integration
+ * App integration
  */
-export interface ProjectIntegration {
+export interface AppIntegration {
   /** Integration name */
   name: string;
   /** Integration type */

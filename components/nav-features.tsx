@@ -1,6 +1,13 @@
 'use client';
 
-import { ChevronRight, type LucideIcon } from 'lucide-react';
+import {
+  Bot,
+  Braces,
+  ChevronRight,
+  Database,
+  LayoutTemplate,
+  Settings2,
+} from 'lucide-react';
 
 import {
   Collapsible,
@@ -18,25 +25,92 @@ import {
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 
-export function NavFeatures({
-  items,
-}: {
-  items: {
-    title: string;
-    url: string;
-    icon?: LucideIcon;
-    isActive?: boolean;
-    items?: {
-      title: string;
-      url: string;
-    }[];
-  }[];
-}) {
+const features = [
+  {
+    title: 'Dashboard',
+    url: '/dashboard',
+    icon: LayoutTemplate,
+    isActive: true,
+  },
+  {
+    title: 'Content',
+    url: '/dashboard/tables',
+    icon: Database,
+    items: [
+      {
+        title: 'Tables',
+        url: '/dashboard/tables',
+      },
+      {
+        title: 'Views',
+        url: '/dashboard/views',
+      },
+      {
+        title: 'Forms',
+        url: '/dashboard/forms',
+      },
+    ],
+  },
+  {
+    title: 'Builder',
+    icon: Braces,
+    items: [
+      {
+        title: 'Templates',
+        url: '/builder/templates',
+      },
+      {
+        title: 'Components',
+        url: '/builder/components',
+      },
+      {
+        title: 'Workflows',
+        url: '/builder/workflows',
+      },
+    ],
+  },
+  {
+    title: 'AI Assistant',
+    url: '/dashboard/ai',
+    icon: Bot,
+    items: [
+      {
+        title: 'Models',
+        url: '/dashboard/ai/models',
+      },
+      {
+        title: 'Workflows',
+        url: '/dashboard/ai/workflows',
+      },
+    ],
+  },
+  {
+    title: 'Settings',
+    url: '/dashboard/settings',
+    icon: Settings2,
+    items: [
+      {
+        title: 'General',
+        url: '/dashboard/settings/general',
+      },
+      {
+        title: 'Users',
+        url: '/dashboard/settings/users',
+      },
+      {
+        title: 'API',
+        url: '/dashboard/settings/api',
+      },
+    ],
+  },
+];
+
+export function NavFeatures() {
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map(item =>
+        {features.map(item =>
           item.items && item.items.length > 0 ? (
             <Collapsible
               key={item.title}
